@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      # Runs the tests and builds target/sentence-splitter.jar.
+      - run: mvn -B package
+      # Checks that a large input streams through a 32 MB heap. The input is
+      # built here by doubling small.in 15 times (32,768 copies, about 27 MB),
+      # so no large file has to be kept in the repository.
+      - name: Large input with a small heap
+        run: |
+          big="$RUNNER_TEMP/large.in"
+          cp sample-files/small.in "$big"
+          for i in $(seq 15); do cat "$big" "$big" > "$big.tmp"; mv "$big.tmp" "$big"; done
+          expected=$(( $(grep -c '' sample-files/small.in) * 32768 ))
+          java -Xmx32m -jar target/sentence-splitter.jar xml < "$big" > "$RUNNER_TEMP/large.xml"
+          java -Xmx32m -jar target/sentence-splitter.jar csv < "$big" > "$RUNNER_TEMP/large.csv"
+          test "$(grep -c '<sentence>' "$RUNNER_TEMP/large.xml")" -eq "$expected"
+          test "$(grep -c '^Sentence ' "$RUNNER_TEMP/large.csv")" -eq "$expected"
+          echo "OK: $expected sentences in each format"

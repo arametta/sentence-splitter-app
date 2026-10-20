@@ -26,7 +26,7 @@ import java.util.List;
  * cannot produce one), so rows are joined with ", " directly, no CSV
  * quoting is needed.
  */
-public class CsvWriter implements AutoCloseable {
+public class CsvWriter implements SentenceWriter {
 
     private final OutputStream out;
     private final Path tempFile;
@@ -47,6 +47,7 @@ public class CsvWriter implements AutoCloseable {
         return tempFile;
     }
 
+    @Override
     public void write(Sentence sentence) throws IOException {
         sentenceNumber++;
         List<String> words = sentence.words();

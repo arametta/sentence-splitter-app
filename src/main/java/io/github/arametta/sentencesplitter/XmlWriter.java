@@ -9,8 +9,11 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Streams Sentence objects out as XML, one sentence element at a time.
+ *
+ * XMLStreamException is wrapped in IOException, so callers of
+ * SentenceWriter only have to handle one exception type.
  */
-public class XmlWriter implements AutoCloseable {
+public class XmlWriter implements SentenceWriter {
 
     // XMLStreamWriter.writeStartDocument() has no overload that adds
     // standalone="yes", so the declaration is written by hand instead.
@@ -20,21 +23,30 @@ public class XmlWriter implements AutoCloseable {
     private final OutputStream out;
     private final XMLStreamWriter writer;
 
-    public XmlWriter(OutputStream out) throws IOException, XMLStreamException {
+    public XmlWriter(OutputStream out) throws IOException {
         this.out = out;
         out.write(XML_DECLARATION.getBytes(StandardCharsets.UTF_8));
-        writer = XMLOutputFactory.newInstance().createXMLStreamWriter(out, "UTF-8");
-        writer.writeStartElement("text");
-        writer.writeCharacters("\n");
+        try {
+            writer = XMLOutputFactory.newInstance().createXMLStreamWriter(out, "UTF-8");
+            writer.writeStartElement("text");
+            writer.writeCharacters("\n");
+        } catch (XMLStreamException e) {
+            throw new IOException(e);
+        }
     }
 
-    public void write(Sentence sentence) throws XMLStreamException {
-        writer.writeStartElement("sentence");
-        for (String word : sentence.words()) {
-            writeWord(word);
+    @Override
+    public void write(Sentence sentence) throws IOException {
+        try {
+            writer.writeStartElement("sentence");
+            for (String word : sentence.words()) {
+                writeWord(word);
+            }
+            writer.writeEndElement();
+            writer.writeCharacters("\n");
+        } catch (XMLStreamException e) {
+            throw new IOException(e);
         }
-        writer.writeEndElement();
-        writer.writeCharacters("\n");
     }
 
     // writeCharacters() does not escape a plain apostrophe, but it is written
@@ -53,11 +65,15 @@ public class XmlWriter implements AutoCloseable {
     }
 
     @Override
-    public void close() throws IOException, XMLStreamException {
-        writer.writeEndElement();
-        writer.writeEndDocument();
-        writer.flush();
-        writer.close();
+    public void close() throws IOException {
+        try {
+            writer.writeEndElement();
+            writer.writeEndDocument();
+            writer.flush();
+            writer.close();
+        } catch (XMLStreamException e) {
+            throw new IOException(e);
+        }
         out.flush();
     }
 }

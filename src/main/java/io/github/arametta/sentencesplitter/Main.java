@@ -3,7 +3,6 @@ package io.github.arametta.sentencesplitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.stream.XMLStreamException;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,7 +16,7 @@ public class Main {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
-    public static void main(String[] args) throws IOException, XMLStreamException {
+    public static void main(String[] args) throws IOException {
         LOGGER.info("Started");
 
         String format = readFormatArgument(args);
@@ -44,8 +43,7 @@ public class Main {
         throw new IllegalStateException("unreachable");
     }
 
-    private static int runWithXmlWriter(BufferedReader input, OutputStream output)
-            throws IOException, XMLStreamException {
+    private static int runWithXmlWriter(BufferedReader input, OutputStream output) throws IOException {
         SentenceReader sentenceReader = new SentenceReader(input);
         int sentenceCount = 0;
         try (XmlWriter writer = new XmlWriter(output)) {

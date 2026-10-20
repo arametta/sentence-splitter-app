@@ -69,20 +69,40 @@ A longer sample is in `sample-files/small.in`, with its output in
 
 ```text
 src/main/java/io/github/arametta/sentencesplitter/
-  Main             reads the format argument and connects the parts
-  SentenceReader   splits the input into sentences on ".", "!" and "?"
-  WordTokenizer    extracts words and defines the sort order
-  Sentence         one sentence's words (a record)
-  XmlWriter        writes sentences as XML
-  CsvWriter        writes sentences as CSV
-src/test/java/...  unit tests and a golden-file test
-sample-files/      small.in and its expected output, small.xml and small.csv
+  Main               reads the format argument and connects the parts
+  OutputFormat       the supported formats (an enum); creates the writer for each
+  SentenceReader     splits the input into sentences on ".", "!" and "?"
+  WordTokenizer      extracts the words from a piece of text
+  Sentence           one sentence's words (a record) and the sort order
+  SentenceProcessor  reads each sentence, sorts it and passes it to the writer
+  SentenceWriter     the interface both writers implement
+  XmlWriter          writes sentences as XML, using JAXB
+  SentenceElement    the JAXB model of one sentence element
+  CsvWriter          writes sentences as CSV
+src/test/java/...    unit tests and a golden-file test
+sample-files/        small.in and its expected output, small.xml and small.csv
 .github/workflows/ci.yml   runs the tests and a large-input, small-heap check
 ```
 
 The golden-file test compares against output produced by this program, so
 it protects against regressions and does not prove the rules by itself;
 the unit tests do that.
+
+## Design notes
+
+- `XmlWriter` and `CsvWriter` implement one interface, `SentenceWriter`, so
+  `SentenceProcessor` and `Main` never depend on a specific format.
+- `OutputFormat` parses the argument and creates the matching writer, so the
+  list of formats is kept in one place.
+- `Sentence` is an immutable record: `sorted()` returns a new sentence.
+- XML is written with JAXB, one sentence fragment at a time, so the document
+  is never held in memory. A small escape handler writes `'` as `&apos;`.
+- CSV is joined by hand: no word can contain a comma, quote or newline, so a
+  CSV library would have no quoting to do.
+- `WordTokenizer` stays a static method: it has no state and one rule, so an
+  interface would add wiring with no second implementation to use it.
+- `SentenceReader` does not implement `Iterator`, because reading can throw
+  `IOException` and `Iterator` methods cannot.
 
 ## Limitations
 

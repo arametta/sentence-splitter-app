@@ -1,9 +1,7 @@
 package io.github.arametta.sentencesplitter;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,12 +15,6 @@ public final class WordTokenizer {
     // (e.g. "3.14"), so a contraction or decimal number stays a single word.
     private static final Pattern WORD_PATTERN =
             Pattern.compile("[\\p{L}\\p{Nd}]+(?:['’][\\p{L}\\p{Nd}]+|\\.\\p{Nd}+)*");
-
-    // Sort case-insensitively, but when two words only differ by case
-    // (e.g. "cat" vs "Cat"), the lowercase spelling sorts first.
-    public static final Comparator<String> WORD_ORDER =
-            Comparator.comparing((String word) -> word.toLowerCase(Locale.ROOT))
-                    .thenComparing(Comparator.reverseOrder());
 
     private WordTokenizer() {
         // Not instantiated; extractWords() is called directly on the class.

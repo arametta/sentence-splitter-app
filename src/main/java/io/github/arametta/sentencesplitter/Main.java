@@ -9,8 +9,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 public class Main {
@@ -53,15 +51,9 @@ public class Main {
         int sentenceCount = 0;
         Sentence sentence;
         while ((sentence = sentenceReader.readNext()) != null) {
-            writer.write(sortWords(sentence));
+            writer.write(sentence.sorted());
             sentenceCount++;
         }
         return sentenceCount;
-    }
-
-    private static Sentence sortWords(Sentence sentence) {
-        List<String> words = new ArrayList<>(sentence.words());
-        words.sort(WordTokenizer.WORD_ORDER);
-        return new Sentence(words);
     }
 }

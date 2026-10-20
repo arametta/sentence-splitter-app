@@ -60,4 +60,35 @@ class SentenceTest {
         assertThatThrownBy(() -> sentence.words().add("today"))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
+
+    @Test
+    void wordOrderSortsLowercaseBeforeSameWordDifferentCase() {
+        assertThat(Sentence.WORD_ORDER.compare("cat", "Cat")).isNegative();
+    }
+
+    @Test
+    void wordOrderSortsInBeforeCapitalIn() {
+        assertThat(Sentence.WORD_ORDER.compare("in", "In")).isNegative();
+    }
+
+    @Test
+    void sortedReturnsWordsCaseInsensitivelyWithLowercaseFirst() {
+        Sentence sentence = new Sentence(List.of("the", "Cat", "Anna", "cat", "fed"));
+
+        assertThat(sentence.sorted().words()).containsExactly("Anna", "cat", "Cat", "fed", "the");
+    }
+
+    @Test
+    void sortedDoesNotChangeTheOriginalSentence() {
+        Sentence sentence = new Sentence(List.of("the", "cat", "Anna"));
+
+        sentence.sorted();
+
+        assertThat(sentence.words()).containsExactly("the", "cat", "Anna");
+    }
+
+    @Test
+    void sortedEmptySentenceIsEmpty() {
+        assertThat(new Sentence(List.of()).sorted().words()).isEmpty();
+    }
 }

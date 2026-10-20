@@ -26,7 +26,7 @@ public class Main {
 
         int sentenceCount;
         try (SentenceWriter writer = format.createWriter(output)) {
-            sentenceCount = processSentences(input, writer);
+            sentenceCount = new SentenceProcessor(new SentenceReader(input), writer).process();
         }
 
         output.flush();
@@ -44,16 +44,5 @@ public class Main {
         System.err.println("Usage: java -jar sentence-splitter.jar <xml|csv> < input > output");
         System.exit(1);
         throw new IllegalStateException("unreachable");
-    }
-
-    private static int processSentences(BufferedReader input, SentenceWriter writer) throws IOException {
-        SentenceReader sentenceReader = new SentenceReader(input);
-        int sentenceCount = 0;
-        Sentence sentence;
-        while ((sentence = sentenceReader.readNext()) != null) {
-            writer.write(sentence.sorted());
-            sentenceCount++;
-        }
-        return sentenceCount;
     }
 }

@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class Main {
 
@@ -19,52 +20,41 @@ public class Main {
     public static void main(String[] args) throws IOException {
         LOGGER.info("Started");
 
-        String format = readFormatArgument(args);
-        LOGGER.info("Format selected: {}", format);
+        OutputFormat format = readFormatArgument(args);
+        LOGGER.info("Format selected: {}", format.argument());
 
         BufferedReader input = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
         OutputStream output = new BufferedOutputStream(System.out);
 
-        int sentenceCount = format.equals("xml")
-                ? runWithXmlWriter(input, output)
-                : runWithCsvWriter(input, output);
+        int sentenceCount;
+        try (SentenceWriter writer = format.createWriter(output)) {
+            sentenceCount = processSentences(input, writer);
+        }
 
         output.flush();
         LOGGER.info("Sentences processed: {}", sentenceCount);
         LOGGER.info("Done");
     }
 
-    private static String readFormatArgument(String[] args) {
-        if (args.length == 1 && (args[0].equals("xml") || args[0].equals("csv"))) {
-            return args[0];
+    private static OutputFormat readFormatArgument(String[] args) {
+        if (args.length == 1) {
+            Optional<OutputFormat> format = OutputFormat.parse(args[0]);
+            if (format.isPresent()) {
+                return format.get();
+            }
         }
         System.err.println("Usage: java -jar sentence-splitter.jar <xml|csv> < input > output");
         System.exit(1);
         throw new IllegalStateException("unreachable");
     }
 
-    private static int runWithXmlWriter(BufferedReader input, OutputStream output) throws IOException {
+    private static int processSentences(BufferedReader input, SentenceWriter writer) throws IOException {
         SentenceReader sentenceReader = new SentenceReader(input);
         int sentenceCount = 0;
-        try (XmlWriter writer = new XmlWriter(output)) {
-            Sentence sentence;
-            while ((sentence = sentenceReader.readNext()) != null) {
-                writer.write(sortWords(sentence));
-                sentenceCount++;
-            }
-        }
-        return sentenceCount;
-    }
-
-    private static int runWithCsvWriter(BufferedReader input, OutputStream output) throws IOException {
-        SentenceReader sentenceReader = new SentenceReader(input);
-        int sentenceCount = 0;
-        try (CsvWriter writer = new CsvWriter(output)) {
-            Sentence sentence;
-            while ((sentence = sentenceReader.readNext()) != null) {
-                writer.write(sortWords(sentence));
-                sentenceCount++;
-            }
+        Sentence sentence;
+        while ((sentence = sentenceReader.readNext()) != null) {
+            writer.write(sortWords(sentence));
+            sentenceCount++;
         }
         return sentenceCount;
     }

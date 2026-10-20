@@ -25,7 +25,7 @@ class XmlWriterTest {
 
         String xml = writeToString(sentence);
 
-        assertThat(xml).contains("<sentence></sentence>");
+        assertThat(xml).contains("<sentence/>");
     }
 
     @Test
